@@ -155,12 +155,12 @@ jobs:
           REPLACE_COUNT=$((REPLACE_COUNT + 0))
           
           total_count=$(wc -l < /tmp/drift_resources.txt | tr -d ' ')
-          echo "create_count=$create_count" >> $GITHUB_OUTPUT
-          echo "update_count=$update_count" >> $GITHUB_OUTPUT
-          echo "delete_count=$delete_count" >> $GITHUB_OUTPUT
-          echo "replace_count=$replace_count" >> $GITHUB_OUTPUT
+          echo "create_count=$CREATE_COUNT" >> $GITHUB_OUTPUT
+          echo "update_count=$UPDATE_COUNT" >> $GITHUB_OUTPUT
+          echo "delete_count=$DELETE_COUNT" >> $GITHUB_OUTPUT
+          echo "replace_count=$REPLACE_COUNT" >> $GITHUB_OUTPUT
           echo "total_count=$total_count" >> $GITHUB_OUTPUT
-          echo "Plan Summary: $create_count creates, $update_count updates, $delete_count deletes, $replace_count replacements."
+          echo "Plan Summary: $CREATE_COUNT creates, $UPDATE_COUNT updates, $DELETE_COUNT deletes, $REPLACE_COUNT replacements."
           # Stage for artifact upload
           cp /tmp/drift_resources.txt ${{ github.workspace }}/drift_resources.txt
       - name: Upload Drift Scan Artifacts
