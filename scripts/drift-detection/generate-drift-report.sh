@@ -41,6 +41,16 @@ while IFS='|' read -r address action resource_type identifier actor_name actor_a
         [ -z "$resource_type" ] && resource_type="unknown"
     fi
     
+    # Normalize action to valid ActionType (create, update, delete, replace, no-op)
+    case "$action" in
+        create|update|delete|replace|no-op) ;;  # valid, keep as-is
+        *created*) action="create" ;;
+        *updated*) action="update" ;;
+        *destroyed*|*deleted*) action="delete" ;;
+        *replaced*) action="replace" ;;
+        *) action="update" ;;  # default fallback
+    esac
+
     # Build resource change JSON object
     change_obj=$(jq -n \
         --arg rt "$resource_type" \
