@@ -1257,10 +1257,10 @@ jobs:
         run: |
           find "${RUNNER_TEMP}/gh-aw/safe-jobs/" -type f -print
           echo "GH_AW_AGENT_OUTPUT=${RUNNER_TEMP}/gh-aw/safe-jobs/agent_output.json" >> "$GITHUB_OUTPUT"
+          echo "TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}" >> "$GITHUB_OUTPUT"
           echo "TELEGRAM_CHANNEL_ID=${{ secrets.TELEGRAM_CHANNEL_ID }}" >> "$GITHUB_OUTPUT"
           echo "TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHANNEL_ID }}" >> "$GITHUB_OUTPUT"
           echo "GH_TOKEN=${{ github.token }}" >> "$GITHUB_OUTPUT"
-          echo "TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}" >> "$GITHUB_OUTPUT"
       - name: Checkout repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         env:
