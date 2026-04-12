@@ -44,7 +44,6 @@ name: "Drift Analysis & Notification Agent"
         description: Environment where drift was detected
         options:
         - dev
-        - prod
         required: false
         type: choice
 
@@ -367,7 +366,7 @@ jobs:
           mkdir -p /tmp/gh-aw/safeoutputs
           mkdir -p /tmp/gh-aw/mcp-logs/safeoutputs
           cat > ${RUNNER_TEMP}/gh-aw/safeoutputs/config.json << 'GH_AW_SAFE_OUTPUTS_CONFIG_eac60baa95b07a63_EOF'
-          {"create_issue":{"close_older_issues":true,"expires":720,"labels":["drift","infrastructure","ai-analysis","automated"],"max":1,"title_prefix":"🔴 [Drift] "},"max_bot_mentions":1,"mentions":{"enabled":false},"missing_data":{},"missing_tool":{},"noop":{"max":1,"report-as-issue":"true"},"send-telegram-notification":{"description":"Send drift detection notification to Telegram channel with drift report summary","inputs":{"environment":{"default":null,"description":"Environment where drift was detected (dev or prod)","required":true,"type":"string"},"total_resources":{"default":null,"description":"Total number of drifted resources","required":true,"type":"string"}},"output":"Telegram notification sent successfully"}}
+          {"create_issue":{"close_older_issues":true,"expires":720,"labels":["drift","infrastructure","ai-analysis","automated"],"max":1,"title_prefix":"🔴 [Drift] "},"max_bot_mentions":1,"mentions":{"enabled":false},"missing_data":{},"missing_tool":{},"noop":{"max":1,"report-as-issue":"true"},"send-telegram-notification":{"description":"Send drift detection notification to Telegram channel with drift report summary","inputs":{"environment":{"default":null,"description":"Environment where drift was detected","required":true,"type":"string"},"total_resources":{"default":null,"description":"Total number of drifted resources","required":true,"type":"string"}},"output":"Telegram notification sent successfully"}}
           GH_AW_SAFE_OUTPUTS_CONFIG_eac60baa95b07a63_EOF
       - name: Write Safe Outputs Tools
         run: |
@@ -384,7 +383,7 @@ jobs:
                   "additionalProperties": false,
                   "properties": {
                     "environment": {
-                      "description": "Environment where drift was detected (dev or prod)",
+                      "description": "Environment where drift was detected",
                       "type": "string"
                     },
                     "total_resources": {
