@@ -17,7 +17,6 @@ on:
         type: choice
         options:
           - dev
-          - prod
 
 permissions:
   contents: read
@@ -48,7 +47,7 @@ safe-outputs:
       output: "Telegram notification sent successfully"
       inputs:
         environment:
-          description: "Environment where drift was detected (dev or prod)"
+          description: "Environment where drift was detected"
           required: true
           type: string
         total_resources:
@@ -221,7 +220,7 @@ Also check these artifact paths for additional detail:
 If no drift data is available (artifacts missing or empty), use GitHub tools to:
 - Check recent runs of the `drift-detection.yml` workflow via the actions toolset
 - Search for recent issues with the `drift` label
-- Review the Terraform configuration in `terraform/dev/` or `terraform/prod/`
+- Review the Terraform configuration in `terraform/dev/`
 
 ## Step 2: Classify Each Drifted Resource
 
@@ -339,7 +338,7 @@ terraform apply
 ## Step 4: Send Telegram Notification
 
 After creating the issue, call the `send_telegram_notification` tool with:
-- `environment`: the environment from the drift context (e.g., "dev" or "prod")
+- `environment`: the environment from the drift context (e.g., "dev")
 - `total_resources`: the total count of drifted resources as a string (e.g., "5")
 
 ## Step 5: No-Drift Fallback
