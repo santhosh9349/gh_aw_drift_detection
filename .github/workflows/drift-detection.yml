@@ -255,8 +255,8 @@ jobs:
 
   # ═══════════════════════════════════════════════════════════════
   # JOB 3: Trigger AI Analysis & Notification
-  # - Fires a repository_dispatch event to ai-analysis-notification
-  #   workflow which handles issue creation + Telegram notification
+  # - Triggers ai-analysis-notification workflow via workflow_dispatch
+  #   (repository_dispatch is blocked for GITHUB_TOKEN; actions:write is not)
   # ═══════════════════════════════════════════════════════════════
   trigger-ai-analysis:
     name: Trigger AI Analysis & Notification
@@ -266,20 +266,19 @@ jobs:
     if: needs.terraform-drift-scan.outputs.drift_detected == 'true'
 
     permissions:
-      contents: read
+      actions: write
 
     steps:
-      - name: Dispatch drift-analysis-notify event
+      - name: Trigger AI Analysis & Notification workflow
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ENVIRONMENT: ${{ github.event.inputs.environment || 'dev' }}
-          TOTAL_COUNT: ${{ needs.terraform-drift-scan.outputs.total_count }}
         run: |
-          gh api repos/${{ github.repository }}/dispatches \
-            --method POST \
-            --field event_type=drift-analysis-notify \
-            --field client_payload='{"environment":"'"$ENVIRONMENT"'","total_count":"'"$TOTAL_COUNT"'","run_id":"${{ github.run_id }}"}'
-          echo "✅ Dispatched drift-analysis-notify to ai-analysis-notification workflow"
+          gh workflow run ai-analysis-notification.lock.yml \
+            --repo ${{ github.repository }} \
+            --ref ${{ github.ref_name }} \
+            -f environment="$ENVIRONMENT"
+          echo "✅ Triggered ai-analysis-notification workflow"
 
   # ═══════════════════════════════════════════════════════════════
   # JOB 4: (Legacy – disabled) Create GitHub Issue & Notify
