@@ -254,7 +254,35 @@ jobs:
           if-no-files-found: warn
 
   # ═══════════════════════════════════════════════════════════════
-  # JOB 3: Create GitHub Issue & Notify
+  # JOB 3: Trigger AI Analysis & Notification
+  # - Fires a repository_dispatch event to ai-analysis-notification
+  #   workflow which handles issue creation + Telegram notification
+  # ═══════════════════════════════════════════════════════════════
+  trigger-ai-analysis:
+    name: Trigger AI Analysis & Notification
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [terraform-drift-scan, cloudtrail-lookup]
+    if: needs.terraform-drift-scan.outputs.drift_detected == 'true'
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Dispatch drift-analysis-notify event
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ENVIRONMENT: ${{ github.event.inputs.environment || 'dev' }}
+          TOTAL_COUNT: ${{ needs.terraform-drift-scan.outputs.total_count }}
+        run: |
+          gh api repos/${{ github.repository }}/dispatches \
+            --method POST \
+            --field event_type=drift-analysis-notify \
+            --field client_payload='{"environment":"'"$ENVIRONMENT"'","total_count":"'"$TOTAL_COUNT"'","run_id":"${{ github.run_id }}"}'
+          echo "✅ Dispatched drift-analysis-notify to ai-analysis-notification workflow"
+
+  # ═══════════════════════════════════════════════════════════════
+  # JOB 4: (Legacy – disabled) Create GitHub Issue & Notify
   # - Download drift scan + CloudTrail artifacts
   # - Generate documented GitHub issue with combined data
   # - Send Telegram notification
