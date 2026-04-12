@@ -63,6 +63,8 @@ safe-outputs:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
         GH_TOKEN: ${{ github.token }}
       steps:
+        - name: Checkout repository
+          uses: actions/checkout@v4
         - name: Setup Python
           uses: actions/setup-python@v5
           with:
