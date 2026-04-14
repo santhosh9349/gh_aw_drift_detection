@@ -20,7 +20,10 @@ override.tf.json
 # IDE
 .vscode/
 .idea/
-.gemini/
+# Ensure AI tool folders are tracked
+# .gemini/
+# .specify/
+# specs/
 *.swp
 *.swo
 *~
