@@ -20,7 +20,7 @@ module "internal_web_server" {
   user_data = file("${path.module}/user_data/nginx.sh")
 
   # Root volume configuration
-  root_volume_size = 30
+  root_volume_size = 40
 
   # Mandatory tags per Constitution
   tags = {
