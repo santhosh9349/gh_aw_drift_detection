@@ -126,35 +126,82 @@ jobs:
         if: steps.plan.outputs.exit_code == '2'
         working-directory: terraform/${{ github.event.inputs.environment || 'dev' }}
         run: |
-          # Parse the plan text output to identify changed resources
+          # Parse the plan text output to count changes (text plan is reliable source)
           echo "Parsing drift from plan output..."
-          
-          # Extract resource changes from plan output
-          grep -E "^  # .* (will be|must be)" ${{ github.workspace }}/plan_output.txt > /tmp/drift_resources.txt 2>/dev/null || true
-          
-          # Count changes safely using a function
+          PLAN_TEXT="${{ github.workspace }}/plan_output.txt"
+          JSONL_FILE="${{ github.workspace }}/plan_stream.jsonl"
+
           count_matches() {
             local pattern="$1"
             local file="$2"
             if [ -f "$file" ]; then
-              grep -c "$pattern" "$file" 2>/dev/null || true
+              grep -c "$pattern" "$file" 2>/dev/null || echo 0
             else
               echo 0
             fi
           }
-          
-          CREATE_COUNT=$(count_matches "will be created" /tmp/drift_resources.txt)
-          UPDATE_COUNT=$(count_matches "will be updated" /tmp/drift_resources.txt)
-          DELETE_COUNT=$(count_matches "will be destroyed" /tmp/drift_resources.txt)
-          REPLACE_COUNT=$(count_matches "must be replaced" /tmp/drift_resources.txt)
-          
+
+          CREATE_COUNT=$(count_matches "will be created" "$PLAN_TEXT")
+          UPDATE_COUNT=$(count_matches "will be updated" "$PLAN_TEXT")
+          DELETE_COUNT=$(count_matches "will be destroyed" "$PLAN_TEXT")
+          REPLACE_COUNT=$(count_matches "must be replaced" "$PLAN_TEXT")
+
           # Ensure values are valid integers (default to 0)
           CREATE_COUNT=$((CREATE_COUNT + 0))
           UPDATE_COUNT=$((UPDATE_COUNT + 0))
           DELETE_COUNT=$((DELETE_COUNT + 0))
           REPLACE_COUNT=$((REPLACE_COUNT + 0))
-          
+
+          # Generate structured pipe-delimited format for CloudTrail lookup:
+          # address|action|resource_type|identifier
+          # Uses plan JSON stream to capture old resource IDs — critical for CloudTrail attribution.
+          # resource_drift messages carry the 'before' state (including the deleted resource's ID).
+          > /tmp/drift_resources.txt
+          if [ -f "$JSONL_FILE" ] && [ -s "$JSONL_FILE" ]; then
+            echo "Parsing plan JSON stream for resource IDs..."
+            # resource_drift: resource was deleted from AWS; before.id holds the old resource ID
+            jq -r '
+              select(.type == "resource_drift") |
+              .change |
+              [
+                .resource.addr,
+                "create",
+                (.resource.resource_type // "unknown"),
+                (.before.id // .before.arn // "unknown")
+              ] | join("|")
+            ' "$JSONL_FILE" >> /tmp/drift_resources.txt 2>/dev/null || true
+
+            # planned_change: captures updates, deletes, replaces (creates are covered by resource_drift above)
+            jq -r '
+              select(.type == "planned_change") |
+              select(.change.action != "no-op" and .change.action != "create") |
+              .change |
+              [
+                .resource.addr,
+                .action,
+                (.resource.resource_type // "unknown"),
+                (.before.id // .before.arn // .after.id // .after.arn // "unknown")
+              ] | join("|")
+            ' "$JSONL_FILE" >> /tmp/drift_resources.txt 2>/dev/null || true
+          fi
+
+          # Fallback: text-based parsing if JSONL produced no output (resource IDs unavailable)
+          if [ ! -s /tmp/drift_resources.txt ]; then
+            echo "Falling back to text plan parsing (resource IDs unavailable)..."
+            grep -E "^  # .* (will be|must be)" "$PLAN_TEXT" | while IFS= read -r line; do
+              clean=$(echo "$line" | sed 's/^[[:space:]]*# //')
+              if   echo "$clean" | grep -q "will be created";   then action="create";  addr=$(echo "$clean" | sed 's/ will be created$//')
+              elif echo "$clean" | grep -q "will be updated";   then action="update";  addr=$(echo "$clean" | sed 's/ will be updated.*$//')
+              elif echo "$clean" | grep -q "will be destroyed"; then action="delete";  addr=$(echo "$clean" | sed 's/ will be destroyed$//')
+              elif echo "$clean" | grep -q "must be replaced";  then action="replace"; addr=$(echo "$clean" | sed 's/ must be replaced$//')
+              else action="unknown"; addr="$clean"; fi
+              rtype=$(echo "$addr" | grep -oP 'aws_[a-z_]+' | tail -1)
+              echo "${addr}|${action}|${rtype:-unknown}|unknown"
+            done >> /tmp/drift_resources.txt || true
+          fi
+
           TOTAL_COUNT=$(wc -l < /tmp/drift_resources.txt | tr -d ' ')
+          TOTAL_COUNT=$((TOTAL_COUNT + 0))
           echo "create_count=$CREATE_COUNT" >> $GITHUB_OUTPUT
           echo "update_count=$UPDATE_COUNT" >> $GITHUB_OUTPUT
           echo "delete_count=$DELETE_COUNT" >> $GITHUB_OUTPUT
