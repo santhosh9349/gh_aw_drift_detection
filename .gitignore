@@ -22,7 +22,7 @@ override.tf.json
 .idea/
 # Ensure AI tool folders are tracked
 # .gemini/
-# .specify/
+
 # specs/
 *.swp
 *.swo

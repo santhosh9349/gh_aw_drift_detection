@@ -5,7 +5,7 @@
 
 **A professional, production-grade repository for managing AWS Infrastructure using Terraform, complete with an advanced automated drift detection & remediation workflow.**
 
-This repository contains IaC (Infrastructure as Code) configurations for deploying highly scalable multi-VPC AWS environments, featuring Transit Gateways (TGW), advanced routing, and rigorous security boundaries. It strictly adheres to GitOps best practices and employs AI-assisted spec planning (`.specify/`).
+This repository contains IaC (Infrastructure as Code) configurations for deploying highly scalable multi-VPC AWS environments, featuring Transit Gateways (TGW), advanced routing, and rigorous security boundaries. It strictly adheres to GitOps best practices.
 
 ---
 
@@ -82,8 +82,6 @@ sequenceDiagram
 │   └── modules/              # Reusable Terraform modules (vpc, ec2, tgw, etc.)
 ├── scripts/                  # Automation scripts (Drift parsing, Telegram/Teams API)
 ├── docs/                     # Extensive project documentation
-├── specs/                    # Final AI-generated specifications and requirements
-├── .specify/                 # SpecKit AI framework directory (active planning)
 └── .github/                  # GitHub workflows, Issue/PR templates, AI agents
 ```
 
@@ -94,10 +92,7 @@ sequenceDiagram
 This project represents a modern approach to infrastructure management by seamlessly integrating **classic GitHub workflows** with **agentic AI analysis**.
 
 - **Agentic Analysis of CI/CD Outputs:** When our classic GitHub Actions drift detection workflow identifies an anomaly and opens an incident issue, our AI agents can step in to analyze the raw Terraform diffs and CloudTrail logs, automatically suggesting IaC remediations.
-- **SpecKit Framework:** We use GitHub Copilot and the **SpecKit** framework to plan and develop new infrastructure or remediate drift.
-- **Visibility:** AI specifications (`.specify/` and `specs/`) are tracked publicly. We encourage reviewing these plans to understand *why* architectural decisions were made.
 - **Instructions**: See `.github/copilot-instructions.md` and our custom `.github/agents/` for automated workflows.
-- For contributors, new features or complex drift remediations should begin with `/speckit.specify` before submitting a PR.
 
 ---
 

@@ -11,8 +11,7 @@ assignees: ''
 A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
 
 **Describe the solution you'd like**
-A clear and concise description of what you want to happen. 
-*Note: If accepted, this will kick off a SpecKit cycle in `.specify/` and `specs/` directories.*
+A clear and concise description of what you want to happen.
 
 **Describe alternatives you've considered**
 A clear and concise description of any alternative solutions or features you've considered.
