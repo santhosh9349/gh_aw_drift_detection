@@ -135,7 +135,8 @@ jobs:
             local pattern="$1"
             local file="$2"
             if [ -f "$file" ]; then
-              grep -c "$pattern" "$file" 2>/dev/null || echo 0
+              # grep -c always prints the count (even 0); exit code 1 on no matches is normal — suppress with || true
+              grep -c "$pattern" "$file" 2>/dev/null || true
             else
               echo 0
             fi
