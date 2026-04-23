@@ -17,7 +17,7 @@ module "internal_web_server" {
   ]
 
   # User data script for nginx setup
-  user_data = file("${path.module}/scripts/ec2/user-data.sh")
+  user_data = file("${path.module}/user_data/nginx.sh")
 
   # Root volume configuration
   root_volume_size = 30
