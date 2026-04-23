@@ -1,10 +1,8 @@
 ## PR Description
 Provide a clear description of the changes you're making and what issue they address. Include links to the relevant issues.
 
-## AI / SpecKit Workflow
-- [ ] This PR aligns with the feature specification (`specs/`/`.specify/`)
+## AI Workflow
 - [ ] This PR updates or follows `.github/agents/speckit.*.agent.md` guidelines
-- [ ] Has technical implementation plans fully reviewed by SpecKit?
 
 ## Type Of Change
 Please delete options that are not relevant.

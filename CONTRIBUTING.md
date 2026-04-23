@@ -21,11 +21,9 @@ Pull requests are the best way to propose changes to the codebase. We actively w
 5. Make sure your code adheres to standard conventions.
 6. Issue that pull request!
 
-## AI and SpecKit Workflow
+## AI Workflow
 We heavily utilize AI-assisted development tools.
-- Please review our `.github/copilot-instructions.md` and `specs/` directories.
-- We use SpecKit (`.specify/`) for feature specification and planning.
-- All new features should begin with specification (`/speckit.specify`) before implementation.
+- Please review our `.github/copilot-instructions.md` directory.
 
 ## Any contributions you make will be under the MIT Software License
 In short, when you submit code changes, your submissions are understood to be under the same [MIT License](LICENSE) that covers the project. Feel free to contact the maintainers if that's a concern.
