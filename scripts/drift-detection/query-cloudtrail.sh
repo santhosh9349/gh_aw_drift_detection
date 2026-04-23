@@ -116,15 +116,15 @@ while IFS='|' read -r address action resource_type identifier; do
             echo "  ❌ No CloudTrail events found for ARN"
         fi
         
-    # Strategy B: If action is "create" (manual deletion), query by delete event name
+    # Strategy B: If action is "create" (resource was manually deleted from AWS)
     elif [ "$action" = "create" ]; then
-        delete_event=$(get_delete_event_name "$resource_type")
-        
-        if [ -n "$delete_event" ]; then
-            echo "  Strategy B: Querying CloudTrail by EventName: $delete_event (manual deletion detected)"
+        # Strategy B1: Use old resource ID from resource_drift state to query CloudTrail by ResourceName.
+        # This is more precise than querying by EventName alone (which returns any event of that type).
+        if [ -n "$identifier" ] && [ "$identifier" != "unknown" ]; then
+            echo "  Strategy B1: Querying CloudTrail by old resource ID: $identifier (manual deletion detected)"
             
             CLOUDTRAIL_EVENT=$(aws cloudtrail lookup-events \
-                --lookup-attributes AttributeKey=EventName,AttributeValue="$delete_event" \
+                --lookup-attributes AttributeKey=ResourceName,AttributeValue="$identifier" \
                 --start-time "$START_TIME" \
                 --max-results 1 \
                 --query 'Events[0].CloudTrailEvent' \
@@ -132,12 +132,35 @@ while IFS='|' read -r address action resource_type identifier; do
             
             if [ -n "$CLOUDTRAIL_EVENT" ] && [ "$CLOUDTRAIL_EVENT" != "None" ] && [ "$CLOUDTRAIL_EVENT" != "null" ]; then
                 extract_actor "$CLOUDTRAIL_EVENT"
-                echo "  ✅ Found via EventName: $actor_name at $event_time"
+                echo "  ✅ Found via old resource ID: $actor_name at $event_time"
             else
-                echo "  ❌ No CloudTrail events found for event: $delete_event"
+                echo "  ❌ No CloudTrail events found for resource ID: $identifier"
             fi
-        else
-            echo "  ⚠️  No CloudTrail event mapping for resource type: $resource_type"
+        fi
+
+        # Strategy B2: Fallback — query by delete EventName if no result from B1
+        if [ "$actor_name" = "*(unavailable)*" ]; then
+            delete_event=$(get_delete_event_name "$resource_type")
+
+            if [ -n "$delete_event" ]; then
+                echo "  Strategy B2: Querying CloudTrail by EventName: $delete_event (fallback)"
+                
+                CLOUDTRAIL_EVENT=$(aws cloudtrail lookup-events \
+                    --lookup-attributes AttributeKey=EventName,AttributeValue="$delete_event" \
+                    --start-time "$START_TIME" \
+                    --max-results 1 \
+                    --query 'Events[0].CloudTrailEvent' \
+                    --output text 2>/dev/null || echo "")
+                
+                if [ -n "$CLOUDTRAIL_EVENT" ] && [ "$CLOUDTRAIL_EVENT" != "None" ] && [ "$CLOUDTRAIL_EVENT" != "null" ]; then
+                    extract_actor "$CLOUDTRAIL_EVENT"
+                    echo "  ✅ Found via EventName: $actor_name at $event_time"
+                else
+                    echo "  ❌ No CloudTrail events found for event: $delete_event"
+                fi
+            else
+                echo "  ⚠️  No CloudTrail event mapping for resource type: $resource_type"
+            fi
         fi
     else
         echo "  ⚠️  Identifier is not an ARN and action is not 'create' - cannot query CloudTrail"
