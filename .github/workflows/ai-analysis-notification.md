@@ -297,36 +297,6 @@ Create a single issue using the `create-issue` safe output. Use this structure:
 
 ---
 
-### 🛠️ Remediation Playbook
-
-#### Option 1: Accept Drift (Update Terraform)
-```bash
-cd terraform/{environment}
-terraform plan
-# Review output, update .tf files to match AWS state
-```
-
-#### Option 2: Revert Drift (Apply Terraform)
-```bash
-cd terraform/{environment}
-terraform apply
-```
-
-#### Option 3: Hybrid Approach
-{When some changes should be kept and others reverted, list specific resources for each path}
-
----
-
-### 🔒 Prevention Recommendations
-
-{3-5 actionable steps to prevent future drift, e.g.:}
-- Enforce Terraform-only changes via SCPs
-- Enable AWS Config rules for change detection
-- Restrict console access for production VPCs
-- Add drift detection to CI/CD pipeline
-
----
-
 <details>
 <summary><b>Full Terraform Plan Output</b></summary>
 
@@ -351,7 +321,6 @@ If no drift data is found (all artifact files are empty or missing, and no recen
 
 - Start all headers at `###` (h3) level — never use `#` or `##` in the issue body
 - Use `<details>` tags for verbose content (full plan output, raw logs)
-- Be specific with `terraform` CLI commands in remediation steps
 - Prioritize security-related drift (IAM, security groups) above all else
 - If CloudTrail attribution is unavailable for some resources, note "No CloudTrail event found" and suggest manual investigation
 - Include the workflow run URL for traceability
