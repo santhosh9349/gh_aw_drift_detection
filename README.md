@@ -292,7 +292,7 @@ graph TD
 
 ## Contributing
 
-Contributions to both the Terraform modules and the drift detection scripts are welcome.
+Enhancement contribution are welcome.
 
 1. Fork the repository and create a branch from `main` or `dev`
 2. For infrastructure changes: run `terraform fmt` and `terraform validate` before committing
@@ -307,8 +307,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 
 - **Workflow logs**: Navigate to **Actions → Terraform Drift Detection** in the GitHub UI
 - **Telegram setup**: [docs/drift-detection/telegram-setup.md](docs/drift-detection/telegram-setup.md)
-- **Scalability guide**: [terraform/dev/SCALABILITY_GUIDE.md](terraform/dev/SCALABILITY_GUIDE.md)
-- **TGW architecture**: [terraform/dev/TGW_CONNECTIVITY_GUIDE.md](terraform/dev/TGW_CONNECTIVITY_GUIDE.md)
 - **Bug reports / feature requests**: Open a [GitHub Issue](https://github.com/santhosh9349/gh_aw_drift_detection/issues)
 
 ---

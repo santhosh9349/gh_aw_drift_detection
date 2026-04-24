@@ -207,10 +207,3 @@ rm test_report.json scripts/drift-detection/.env
 3. **Use private channels** - For sensitive drift information
 4. **Limit channel access** - Only add necessary team members
 5. **Review logs** - Tokens are automatically sanitized in logs
-
-## Additional Resources
-
-- [Telegram Bot API Documentation](https://core.telegram.org/bots/api)
-- [BotFather Commands](https://core.telegram.org/bots#botfather)
-- [python-telegram-bot Library](https://python-telegram-bot.org/)
-- [GitHub Actions Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
