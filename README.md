@@ -223,41 +223,6 @@ This regenerates `ai-analysis-notification.lock.yml`. Commit both files.
 
 ---
 
-## Infrastructure Architecture
-
-The Terraform configuration deploys a **Transit Gateway hub-and-spoke** network across three VPCs:
-
-```mermaid
-graph TD
-    Internet((Internet))
-
-    subgraph Routing ["Transit Gateway · Full Mesh"]
-        TGW[AWS Transit Gateway]
-    end
-
-    subgraph VPCs ["VPC Environments"]
-        V1["Inspection VPC\n192.0.0.0/16"]
-        V2["Dev VPC\n172.0.0.0/16"]
-        V3["Prod VPC\n10.0.0.0/16"]
-    end
-
-    Internet --> IGW1[IGW] & IGW2[IGW] & IGW3[IGW]
-    IGW1 --> V1
-    IGW2 --> V2
-    IGW3 --> V3
-    V1 <--> TGW
-    V2 <--> TGW
-    V3 <--> TGW
-```
-
-**Subnet naming convention (enforced by route table logic):**
-- `pub_*` — public subnet: assigned public IPs, routed to Internet Gateway
-- `priv_*` — private subnet: no public IPs, routed via Transit Gateway
-
-**Scalability:** Add a new entry to `var.vpcs` in `terraform/dev/variables.tf`. All route tables, TGW attachments, and subnets are provisioned automatically via `for_each` — zero additional Terraform code required. See [terraform/dev/SCALABILITY_GUIDE.md](terraform/dev/SCALABILITY_GUIDE.md).
-
----
-
 ## Project Structure
 
 ```text

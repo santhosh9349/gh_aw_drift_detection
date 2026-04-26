@@ -44,12 +44,3 @@ variable "subnets" {
     }
   }
 }
-
-variable "tgw_tags" {
-  description = "Tags for the Transit Gateway"
-  type        = map(string)
-  default = {
-    Name        = "inspection-tgw"
-    Environment = "dev"
-  }
-}
