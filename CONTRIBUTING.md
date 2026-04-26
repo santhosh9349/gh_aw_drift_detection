@@ -34,7 +34,7 @@ We use GitHub issues to track public bugs. Report a bug by opening a new issue; 
 ## Code structure
 - `terraform/`: Terraform configurations used primarily for testing the drift detection workflows.
 - `scripts/`: Python and Bash scripts for drift detection operations.
-- `modules/`: Reusable Terraform modules.
+- `terraform/modules/`: Reusable Terraform modules.
 - `docs/`: Extensive project documentation.
 
 ## License
