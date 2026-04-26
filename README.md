@@ -152,7 +152,7 @@ Store the role ARN as the repository variable `AWS_OIDC_ROLE_ARN`.
 
 The AI analysis step requires a GitHub Copilot-enabled token:
 
-- Generate a **fine-grained personal access token** with `models: read` scope or use a GitHub App token
+- Generate a **fine-grained personal access token** with `co-pilot requests: read` scope or use a GitHub App token
 - Store it as the repository secret `COPILOT_GITHUB_TOKEN`
 
 ### 4. Telegram Bot
@@ -185,12 +185,11 @@ cd gh_aw_drift_detection
 # Install the gh-aw GitHub CLI extension
 gh extension install github/gh-aw
 ```
+> For detailed guidance on configuring a repository for Agentic Workflows, refer to the [Agentic Authoring Guide](https://github.github.com/gh-aw/guides/agentic-authoring/).
 
 ### 2. Configure GitHub Secrets and Variables
 
 Navigate to **Settings → Secrets and variables → Actions** in your repository and add all secrets and variables listed in [Prerequisites](#prerequisites).
-
-> For detailed guidance on configuring a repository for Agentic Workflows, refer to the [Agentic Authoring Guide](https://github.github.com/gh-aw/guides/agentic-authoring/).
 
 ### 3. Deploy the Terraform Infrastructure (optional)
 
@@ -218,7 +217,7 @@ The workflow also runs automatically every day at **06:00 UTC**.
 
 ### 5. Editing the Agentic Workflow
 
-The agent prompt lives in the human-readable source file. After editing, compile it:
+The agent prompt lives in the human-readable source file. After editing(If customization needed), compile it:
 
 ```bash
 gh aw compile .github/workflows/ai-analysis-notification.md
