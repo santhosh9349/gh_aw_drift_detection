@@ -313,6 +313,7 @@ When using Copilot with default settings, **each workflow run typically incurs t
 
 > Source: [Automate repository tasks with GitHub Agentic Workflows](https://github.blog/ai-and-ml/automate-repository-tasks-with-github-agentic-workflows/) — GitHub Blog, February 2026
 
+Note: Free copilot plan includes 50 agent mode or chat requests per month with access to Haiku 4.5, GPT-5 mini, and more
 ---
 
 ## Getting Help
