@@ -1,6 +1,7 @@
 # AWS Infrastructure Drift Detection with GitHub Agentic Workflows
 
-[![Drift Detection](https://github.com/santhosh9349/gh_aw_drift_detection/actions/workflows/drift-detection.yml/badge.svg)](https://github.com/santhosh9349/gh_aw_drift_detection/actions/workflows/drift-detection.yml)
+[![Terraform Drift Detection](https://github.com/santhosh9349/gh_aw_drift_detection/actions/workflows/drift-detection.yml/badge.svg)](https://github.com/santhosh9349/gh_aw_drift_detection/actions/workflows/drift-detection.yml)
+[![Drift Analysis & Notification Agent](https://github.com/santhosh9349/gh_aw_drift_detection/actions/workflows/ai-analysis-notification.lock.yml/badge.svg)](https://github.com/santhosh9349/gh_aw_drift_detection/actions/workflows/ai-analysis-notification.lock.yml)
 [![Terraform](https://img.shields.io/badge/Terraform-1.5.x-7B42BC?logo=terraform)](https://www.terraform.io/)
 [![AWS Provider](https://img.shields.io/badge/AWS_Provider-5.x-FF9900?logo=amazon-aws)](https://registry.terraform.io/providers/hashicorp/aws/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -21,8 +22,9 @@ This repository manages multi-VPC AWS infrastructure with Terraform and runs a d
 6. [Infrastructure Architecture](#infrastructure-architecture)
 7. [Project Structure](#project-structure)
 8. [Contributing](#contributing)
-9. [Getting Help](#getting-help)
-10. [License](#license)
+9. [Costs](#costs)
+10. [Getting Help](#getting-help)
+11. [License](#license)
 
 ---
 
@@ -288,6 +290,28 @@ Enhancement contribution are welcome.
 4. Open a pull request with a description of what changed and why
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community standards.
+
+---
+
+## Costs
+
+GitHub Agentic Workflows use coding agents at runtime, which incur billing costs.
+
+When using Copilot with default settings, **each workflow run typically incurs two [premium requests](https://docs.github.com/en/billing/concepts/product-billing/github-copilot-premium-requests)**:
+
+| Request | Purpose |
+|---|---|
+| 1st premium request | Agentic work (reasoning, tool calls, analysis) |
+| 2nd premium request | Guardrail check through safe outputs (threat detection) |
+
+**Key points:**
+
+- Automated uses of Copilot are associated with the **user account** whose `COPILOT_GITHUB_TOKEN` is used — premium requests are drawn from that account's monthly quota
+- The model used by the agent can be configured to help manage costs (e.g. switching to a lighter model for simpler workflows)
+- This project runs agentic workflows `ai-analysis-notification`, which consumes approximately **2 premium requests** in total
+- For other coding agent engines (Claude Code, OpenAI Codex, etc.), refer to the [gh-aw engine documentation](https://github.github.com/gh-aw/reference/engines/) for billing details
+
+> Source: [Automate repository tasks with GitHub Agentic Workflows](https://github.blog/ai-and-ml/automate-repository-tasks-with-github-agentic-workflows/) — GitHub Blog, February 2026
 
 ---
 
