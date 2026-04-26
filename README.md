@@ -80,10 +80,12 @@ flowchart TD
 
     subgraph JOB2["Job 2 · CloudTrail Lookup"]
         I[Download drift scan artifacts] --> J[query-cloudtrail.sh\nper drifted resource]
-        J --> K{Strategy}
-        K -- "Update / Delete\n→ ARN-based lookup" --> L[CloudTrail: AttributeKey=ResourceName]
-        K -- "Create\n= manual deletion\n→ EventName lookup" --> M[CloudTrail: AttributeKey=EventName]
-        L & M --> N[Build attribution table\nactor · ARN · timestamp]
+        J --> KA{"Strategy A:\nidentifier is an ARN?"}
+        KA -- "Yes → ARN lookup" --> L[CloudTrail: AttributeKey=ResourceName\nusing ARN]
+        KA -- "No + action = create\n(resource manually deleted)" --> KB{"Strategy B1:\nold resource ID known?"}
+        KB -- "Yes → resource ID lookup" --> M[CloudTrail: AttributeKey=ResourceName\nusing old resource ID]
+        KB -- "No result" --> MC[Strategy B2 fallback\nCloudTrail: AttributeKey=EventName\ne.g. DeleteVpc · TerminateInstances]
+        L & M & MC --> N[Build attribution table\nactor · ARN · timestamp]
         N --> O[Upload Artifacts\ndrift_resources_attributed.txt\nattribution_table.md]
     end
 
@@ -110,19 +112,22 @@ flowchart TD
 terraform plan (text + JSON stream)
         │
         ▼
+plan_stream.jsonl            raw JSON stream from terraform plan -json
+        │
+        ▼
 drift_resources.txt          address | action | resource_type | identifier
         │
         ▼
 drift_resources_attributed.txt   + actor_name | actor_arn | event_time
         │
-        ▼
-attribution_table.md         Markdown table for GitHub issue body
-        │
-        ▼
-drift_report.json            Structured report for Telegram notification
-        │
-        ▼
-Telegram message + GitHub Issue (AI-written)
+        ├─────────────────────────────────────┐
+        ▼                                     ▼
+attribution_table.md                   drift_report.json
+Markdown table for GitHub issue        Structured report for Telegram
+        │                                     │
+        └──────────────┬──────────────────────┘
+                       ▼
+          Telegram message + GitHub Issue (AI-written)
 ```
 
 ---
@@ -231,26 +236,45 @@ This regenerates `ai-analysis-notification.lock.yml`. Commit both files.
 │   ├── workflows/
 │   │   ├── drift-detection.yml              # Main drift detection pipeline
 │   │   ├── ai-analysis-notification.md      # Agentic workflow source (editable)
-│   │   └── ai-analysis-notification.lock.yml # Compiled agentic workflow (auto-generated)
+│   │   ├── ai-analysis-notification.lock.yml # Compiled agentic workflow (auto-generated)
+│   │   ├── issue-cleanup.md                 # Issue cleanup agentic workflow source
+│   │   ├── issue-cleanup.lock.yml           # Compiled issue cleanup workflow (auto-generated)
+│   │   ├── agentics-maintenance.yml         # Maintenance workflow for agentic workflows
+│   │   └── copilot-setup-steps.yml          # Copilot environment setup
 │   ├── agents/                              # SpecKit agent definitions
+│   ├── instructions/                        # Copilot instruction files
+│   ├── prompts/                             # Prompt templates
+│   ├── aw/                                  # gh-aw configuration and reference files
+│   ├── ISSUE_TEMPLATE/                      # GitHub issue templates
+│   ├── pull_request_template.md             # PR template
 │   └── copilot-instructions.md             # Repository-wide Copilot instructions
 ├── terraform/
-│   ├── dev/                                # Dev environment — VPCs, subnets, TGW, EC2
-│   │   ├── variables.tf                    # Add new VPCs here to scale
-│   │   ├── SCALABILITY_GUIDE.md
-│   │   └── TGW_CONNECTIVITY_GUIDE.md
-│   └── modules/                            # Reusable modules: vpc, subnet, route_table, ec2, tgw
+│   ├── dev/                                # Dev environment — VPCs, subnets, EC2
+│   │   ├── terraform.tf                    # Terraform Cloud backend + provider config
+│   │   ├── variables.tf                    # Add new VPCs/subnets here to scale
+│   │   ├── vpc.tf                          # Dynamic VPC creation
+│   │   ├── subnets.tf                      # Dynamic subnet creation
+│   │   ├── ec2.tf                          # EC2 instance configuration
+│   │   ├── outputs.tf                      # Environment outputs
+│   │   └── user_data/                      # EC2 user data scripts
+│   └── modules/                            # Reusable modules: vpc, subnet, ec2
 ├── scripts/
 │   └── drift-detection/
-│       ├── query-cloudtrail.sh             # CloudTrail attribution (dual-strategy)
-│       ├── generate-drift-report.sh        # Builds drift_report.json
+│       ├── query-cloudtrail.sh             # CloudTrail attribution (3-strategy lookup)
+│       ├── generate-drift-report.sh        # Converts attributed data to drift_report.json
+│       ├── generate-plan-json.sh           # Generates plan JSON stream from terraform plan
 │       ├── parse-terraform-plan.sh         # Extracts resource IDs from plan JSON stream
-│       ├── notify_telegram.py              # Sends formatted Telegram message
-│       ├── models.py                       # Pydantic models for drift report
-│       └── requirements.txt               # Python deps (python-telegram-bot, pydantic, tenacity)
+│       ├── notify_telegram.py              # Sends formatted Telegram message (async)
+│       ├── message_formatter.py            # MarkdownV2 message formatting + splitting
+│       ├── models.py                       # Pydantic models (DriftDetectionEvent, ResourceChange, etc.)
+│       ├── config.py                       # Configuration loader (env vars → NotificationConfig)
+│       ├── retry_handler.py                # Exponential backoff retry logic (tenacity)
+│       ├── env.example                     # Template for local development env vars
+│       ├── requirements.txt                # Python deps (python-telegram-bot, pydantic, tenacity)
+│       └── REFACTORING_README.md           # Notes on script architecture and refactoring
 └── docs/
     └── drift-detection/
-        └── telegram-setup.md              # Step-by-step Telegram bot setup
+        └── telegram-setup.md              # Step-by-step Telegram bot and channel setup
 ```
 
 ---

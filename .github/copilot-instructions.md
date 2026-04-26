@@ -7,9 +7,9 @@ This repository manages AWS infrastructure deployment using Infrastructure as Co
 ### Infrastructure
 - **Terraform v1.5.x** for declarative infrastructure management
 - **AWS Provider 5.x** for AWS resource provisioning
-- **AWS Services**: VPC (multi-VPC architecture), Transit Gateway (full mesh connectivity), Subnets, Route Tables, Internet Gateways, EC2, Security Groups, IAM (Roles, Policies, Instance Profiles), Systems Manager (Session Manager for no-SSH management)
+- **AWS Services**: VPC (multi-VPC architecture), Subnets, Internet Gateways, EC2, Security Groups, IAM (Roles, Policies, Instance Profiles), Systems Manager (Session Manager for no-SSH management)
 - **State Management**: Terraform Cloud (remote state, no local state management)
-- **Architecture**: Multi-VPC setup with Transit Gateway hub for inter-VPC communication
+- **Architecture**: Multi-VPC isolated architecture
   - Inspection VPC (192.0.0.0/16) - Network inspection/firewall
   - Dev VPC (172.0.0.0/16) - Development environment
   - Prod VPC (10.0.0.0/16) - Production environment
@@ -37,19 +37,10 @@ aws_infra/
 │   │   │   ├── main.tf         # Subnet resource definitions
 │   │   │   ├── outputs.tf      # Subnet outputs (subnet_ids, etc.)
 │   │   │   └── variables.tf    # Subnet input variables
-│   │   ├── route_table/        # Route table module for VPC routing
-│   │   │   ├── main.tf         # Route table, associations, TGW/IGW routes
-│   │   │   ├── outputs.tf      # Route table outputs (route_table_id, etc.)
-│   │   │   └── variables.tf    # Route table input variables
-│   │   ├── ec2/                # EC2 instance module
-│   │   │   ├── main.tf         # EC2 instance definitions
-│   │   │   ├── outputs.tf      # EC2 outputs (instance_ids, IPs, etc.)
-│   │   │   └── variables.tf    # EC2 input variables
-│   │   └── tgw/                # Transit Gateway module for multi-VPC connectivityn
-
-│   │       ├── main.tf         # TGW + multiple VPC attachments (scalable)
-│   │       ├── outputs.tf      # TGW outputs (tgw_id, attachment_ids, etc.)
-│   │       └── variables.tf    # TGW input variables
+│   │   └── ec2/                # EC2 instance module
+│   │       ├── main.tf         # EC2 instance definitions
+│   │       ├── outputs.tf      # EC2 outputs (instance_ids, IPs, etc.)
+│   │       └── variables.tf    # EC2 input variables
 │   │
 │   ├── dev/                     # Development environment configuration
 │   │   ├── terraform.tf        # Terraform and provider configuration
@@ -57,36 +48,21 @@ aws_infra/
 │   │   ├── vpc.tf              # Dynamic VPC creation (for_each loop)
 │   │   ├── subnets.tf          # Dynamic subnet creation across all VPCs
 │   │   ├── ec2.tf              # EC2 module instantiation
-│   │   ├── tgw.tf              # TGW with dynamic VPC attachments
-│   │   ├── route_tables.tf     # Dynamic route tables + IGWs for all VPCs
-│   │   ├── outputs.tf          # Environment outputs (VPCs, TGW, routes)
-│   │   ├── SCALABILITY_GUIDE.md       # Complete scalability documentation
-│   │   ├── SCALING_EXAMPLE.md         # Step-by-step: 3 to 10 VPCs example
-│   │   └── TGW_CONNECTIVITY_GUIDE.md  # Transit Gateway architecture guide
+│   │   └── outputs.tf          # Environment outputs (VPCs, subnets, EC2)
 │   │
 │   └── prod/                    # Production environment configuration
 │       └── (not yet implemented - use dev/ as template)
 │
-├── environments/                 # Environment-specific configurations
-│   └── dev/                     # Development environment files
-│
 ├── scripts/                      # Automation and utility scripts
-│   └── (deployment, testing, setup scripts)
-│
-├── .specify/                     # SpecKit feature specification system
-│   ├── memory/                  # Feature specifications and documentation
-│   ├── scripts/                 # SpecKit automation scripts
-│   └── templates/               # Specification templates
+│   └── drift-detection/          # Drift detection scripts and Python modules
 │
 ├── .github/                      # GitHub configuration
 │   ├── copilot-instructions.md  # This file
 │   ├── agents/                  # SpecKit agent definitions
-│   │   ├── speckit.clarify.agent.md
-│   │   └── (other agent files)
 │   └── prompts/                 # SpecKit prompt templates
 │
-├── .gemini/                      # Gemini AI integration
-│   └── commands/                # Custom command definitions
+├── docs/                         # Project documentation
+│   └── drift-detection/          # Drift detection setup guides
 │
 ├── README.md                     # Project documentation
 └── LICENSE                       # License information
@@ -106,12 +82,11 @@ aws_infra/
 - **State management**: Never manage state locally - all state in Terraform Cloud
 - **Naming conventions**:
   - Subnets starting with `pub_` are public (get public IPs and IGW routes)
-  - Subnets starting with `priv_` are private (TGW routes only)
-  - This convention is CRITICAL for route table logic
+  - Subnets starting with `priv_` are private (no public IPs)
+  - This convention is CRITICAL for subnet configuration logic
 - **Security**: 
   - Configure security groups with least privilege access
   - Place compute resources in private subnets
-  - Use Transit Gateway for inter-VPC communication
   - Enable VPC Flow Logs and CloudTrail
 - **Documentation**: Include description for every variable and output
 - **Output values**: Always output critical resource IDs, ARNs, and endpoints
@@ -178,9 +153,7 @@ aws_infra/
 - **Deploy infrastructure**: Navigate to environment folder (`terraform/dev/` or `terraform/prod/`) and use Terraform commands (`terraform plan`, `terraform apply`)
 - **Scale infrastructure**: Add new VPCs to `var.vpcs` and subnets to `var.subnets` in `variables.tf` - everything else is automatic
 - **Module updates**: Modify modules in `terraform/modules/` and update version references in environment configs
-- **Multi-VPC connectivity**: All VPCs automatically get full mesh routing via Transit Gateway
-- **View architecture**: Check `TGW_CONNECTIVITY_GUIDE.md` for infrastructure diagrams
-- **Scaling guide**: See `SCALABILITY_GUIDE.md` for detailed scaling documentation
+- **Multi-VPC scaling**: Add new VPCs to `var.vpcs` and subnets to `var.subnets` — all resources scale automatically
 - Scripts should be executable and include usage documentation in comments
 - Create new scripts for repetitive tasks
 
@@ -210,7 +183,7 @@ aws_infra/
 ## Infrastructure Architecture
 
 ### Multi-VPC Design
-The infrastructure uses a **Transit Gateway hub-and-spoke** model for inter-VPC connectivity:
+The infrastructure provisions multiple isolated VPCs, each with its own Internet Gateway for public subnet access:
 
 ```
         Internet
@@ -218,26 +191,18 @@ The infrastructure uses a **Transit Gateway hub-and-spoke** model for inter-VPC 
     Internet Gateways (one per VPC)
            |
     [Public Subnets] ←→ [Private Subnets]
-           |                    |
-           └────────────────────┘
-                    |
-             Transit Gateway (Hub)
-                    |
-        Full Mesh Routing Between All VPCs
 ```
 
 **Key Features:**
 - **3 VPCs by default**: inspection (192.0.0.0/16), dev (172.0.0.0/16), prod (10.0.0.0/16)
 - **4 subnets per VPC**: 2 public (pub_sub1, pub_sub2), 2 private (priv_sub1, priv_sub2)
 - **Automatic scaling**: Add VPCs to variables.tf and everything scales automatically
-- **Full mesh connectivity**: Each VPC can communicate with all other VPCs via TGW
 - **Internet access**: Each VPC has its own Internet Gateway for public subnets
-- **Dynamic routing**: Routes to all other VPCs are automatically created
+- **EC2**: One internal web server deployed in the dev VPC private subnet
 
 ### Scalability
-- **Current**: 3 VPCs, 12 subnets, 6 route tables, 1 Transit Gateway, 3 TGW attachments
+- **Current**: 3 VPCs, 12 subnets, 1 EC2 instance
 - **Can scale to**: 100+ VPCs with zero code changes (just update variables)
-- **Full documentation**: See [terraform/dev/SCALABILITY_GUIDE.md](terraform/dev/SCALABILITY_GUIDE.md) and [SCALING_EXAMPLE.md](terraform/dev/SCALING_EXAMPLE.md)
 
 ## Notes for Copilot
 
@@ -257,8 +222,6 @@ The infrastructure uses a **Transit Gateway hub-and-spoke** model for inter-VPC 
 
 ### Documentation
 - Major infrastructure changes should be documented in relevant .md files
-- Keep [TGW_CONNECTIVITY_GUIDE.md](terraform/dev/TGW_CONNECTIVITY_GUIDE.md) updated with architecture changes
-- Update [SCALABILITY_GUIDE.md](terraform/dev/SCALABILITY_GUIDE.md) if scaling patterns change
 - Document new modules in module-specific README files
 
 ### SpecKit Workflow

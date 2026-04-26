@@ -97,14 +97,7 @@ Process completed with exit code 2.
     fi
 ```
 
-**Parse Plan JSON Stream Step** - Simplified to just parse native JSON:
-```yaml
-- name: Parse Plan JSON Stream
-  run: |
-    bash scripts/drift-detection/generate-plan-json.sh \
-      plan_stream.jsonl \
-      /tmp/plan.json
-```
+**Parse Plan JSON Stream Step** - Plan parsing is performed inline in `drift-detection.yml` using `jq` directly on the JSONL stream. The standalone `generate-plan-json.sh` and `parse-terraform-plan.sh` scripts are available for local/manual use but are not invoked by the workflow.
 
 ### Benefits of This Refactor
 
