@@ -1,1 +1,0 @@
-{"Modules":[{"Key":"","Source":"","Dir":"."},{"Key":"internal_web_server","Source":"../modules/ec2","Dir":"../modules/ec2"},{"Key":"subnets","Source":"../modules/subnet","Dir":"../modules/subnet"},{"Key":"vpc","Source":"../modules/vpc","Dir":"../modules/vpc"}]}
