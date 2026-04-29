@@ -1,1 +1,18 @@
+# Normalize line endings for all text files
+* text=auto
+
+# Force LF for files that must use LF on all platforms (Linux runners, shells)
+*.sh        text eol=lf
+*.py        text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.md        text eol=lf
+*.tf        text eol=lf
+*.tfvars    text eol=lf
+*.json      text eol=lf
+*.txt       text eol=lf
+*.env       text eol=lf
+Makefile    text eol=lf
+
+# Mark auto-generated lock files for GitHub and merge strategy
 .github/workflows/*.lock.yml linguist-generated=true merge=ours
