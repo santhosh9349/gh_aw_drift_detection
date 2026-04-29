@@ -56,6 +56,8 @@ Infrastructure drift — when live AWS resources diverge from their Terraform st
 
 The agentic layer sits _after_ the deterministic data-collection jobs, so the structured pipeline remains reliable while the AI handles the judgment call on impact and remediation guidance.
 
+> **Design intent**: The drift detection pipeline (`drift-detection.yml`) is built entirely with standard GitHub Actions — no Copilot credits consumed for data collection. The agentic workflow (`ai-analysis-notification.lock.yml`) is only triggered when drift is actually detected, meaning **Copilot premium requests are only spent when there is something meaningful to analyse**. On drift-free days, the pipeline runs at zero AI cost.
+
 ---
 
 ## How It Works
@@ -294,6 +296,14 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 ---
 
 ## Costs
+
+### Cost-Conscious Architecture
+
+This solution was deliberately architected to minimise Copilot premium request usage:
+
+- **Drift detection** (`drift-detection.yml`) runs as a standard GitHub Actions workflow — Terraform plan, CloudTrail attribution, and artifact generation are all plain shell/Python steps that consume **zero Copilot credits**.
+- **AI analysis and notification** (`ai-analysis-notification.lock.yml`) is an agentic workflow that is only triggered **conditionally, when drift is detected**. On days with no drift the agentic workflow never runs, so no premium requests are drawn.
+- This means Copilot credits come into play only when there is real drift to reason about — the most valuable use of an AI agent.
 
 GitHub Agentic Workflows use coding agents at runtime, which incur billing costs.
 
