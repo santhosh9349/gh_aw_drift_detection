@@ -134,6 +134,8 @@ Markdown table for GitHub issue        Structured report for Telegram
           Telegram message + GitHub Issue (AI-written)
 ```
 
+> **Example output**: [Issue #161 — AI-generated drift analysis](https://github.com/santhosh9349/gh_aw_drift_detection/issues/161) — a real issue created by the agent after detecting drift, showing risk classification, CloudTrail attribution, and remediation guidance.
+
 ---
 
 ## Prerequisites
