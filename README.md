@@ -72,7 +72,7 @@ flowchart TD
     A([Schedule: Daily 6 AM UTC\nor workflow_dispatch]) --> B
 
     subgraph JOB1["Job 1 · Terraform Drift Scan"]
-        B[Configure AWS via OIDC] --> C[terraform init]
+        B[Configure Teeraform cloud Auth Token] --> C[terraform init]
         C --> D["terraform plan -detailed-exitcode\n+ retry on state lock"]
         D --> E{Exit Code}
         E -- "0 · No drift" --> F[✅ Write job summary]
