@@ -22,9 +22,8 @@ This repository manages multi-VPC AWS infrastructure with Terraform and runs a d
 6. [Infrastructure Architecture](#infrastructure-architecture)
 7. [Project Structure](#project-structure)
 8. [Contributing](#contributing)
-9. [Costs](#costs)
-10. [Getting Help](#getting-help)
-11. [License](#license)
+9. [Getting Help](#getting-help)
+10. [License](#license)
 
 ---
 
@@ -56,7 +55,7 @@ Infrastructure drift — when live AWS resources diverge from their Terraform st
 
 The agentic layer sits _after_ the deterministic data-collection jobs, so the structured pipeline remains reliable while the AI handles the judgment call on impact and remediation guidance.
 
-> **Design intent**: The drift detection pipeline (`drift-detection.yml`) is built entirely with standard GitHub Actions — no Copilot credits consumed for data collection. The agentic workflow (`ai-analysis-notification.lock.yml`) is only triggered when drift is actually detected, meaning **Copilot premium requests are only spent when there is something meaningful to analyse**. On drift-free days, the pipeline runs at zero AI cost.
+> **Design intent**: The drift detection pipeline (`drift-detection.yml`) is built entirely with standard GitHub Actions — no AI is involved in data collection. The agentic workflow (`ai-analysis-notification.lock.yml`) is only triggered when drift is actually detected, so **the AI agent only runs when there is something meaningful to analyse**. On drift-free days, no AI is invoked.
 
 ---
 
@@ -156,7 +155,7 @@ Store the role ARN as the repository variable `AWS_OIDC_ROLE_ARN`.
 
 ### 3. GitHub Agentic Workflows — Copilot Token
 
-The AI analysis step requires a GitHub Copilot-enabled token:
+The AI analysis workflow (`ai-analysis-notification`) runs on the **GitHub Copilot CLI** engine. It is the only part of this solution that uses Copilot; the drift detection pipeline (`drift-detection.yml`) is plain GitHub Actions. The analysis step requires a GitHub Copilot-enabled token:
 
 - Generate a **fine-grained personal access token** with `co-pilot requests: read` scope or use a GitHub App token
 - Store it as the repository secret `COPILOT_GITHUB_TOKEN`
@@ -295,37 +294,6 @@ Enhancement contribution are welcome.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community standards.
 
----
-
-## Costs
-
-### Cost-Conscious Architecture
-
-This solution was deliberately architected to minimise Copilot premium request usage:
-
-- **Drift detection** (`drift-detection.yml`) runs as a standard GitHub Actions workflow — Terraform plan, CloudTrail attribution, and artifact generation are all plain shell/Python steps that consume **zero Copilot credits**.
-- **AI analysis and notification** (`ai-analysis-notification.lock.yml`) is an agentic workflow that is only triggered **conditionally, when drift is detected**. On days with no drift the agentic workflow never runs, so no premium requests are drawn.
-- This means Copilot credits come into play only when there is real drift to reason about — the most valuable use of an AI agent.
-
-GitHub Agentic Workflows use coding agents at runtime, which incur billing costs.
-
-When using Copilot with default settings, **each workflow run typically incurs two [premium requests](https://docs.github.com/en/billing/concepts/product-billing/github-copilot-premium-requests)**:
-
-| Request | Purpose |
-|---|---|
-| 1st premium request | Agentic work (reasoning, tool calls, analysis) |
-| 2nd premium request | Guardrail check through safe outputs (threat detection) |
-
-**Key points:**
-
-- Automated uses of Copilot are associated with the **user account** whose `COPILOT_GITHUB_TOKEN` is used — premium requests are drawn from that account's monthly quota
-- The model used by the agent can be configured to help manage costs (e.g. switching to a lighter model for simpler workflows)
-- This project runs agentic workflows `ai-analysis-notification`, which consumes approximately **2 premium requests** in total
-- For other coding agent engines (Claude Code, OpenAI Codex, etc.), refer to the [gh-aw engine documentation](https://github.github.com/gh-aw/reference/engines/) for billing details
-
-> Source: [Automate repository tasks with GitHub Agentic Workflows](https://github.blog/ai-and-ml/automate-repository-tasks-with-github-agentic-workflows/) — GitHub Blog, February 2026
-
-Note: Free copilot plan includes 50 agent mode or chat requests per month with access to Haiku 4.5, GPT-5 mini, and more
 ---
 
 ## Getting Help
