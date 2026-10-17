@@ -8,7 +8,7 @@
 
 **Detect, attribute, and report AWS infrastructure drift automatically — powered by GitHub Agentic Workflows and AI analysis.**
 
-This repository deploys a single demo EC2 instance with Terraform and runs a daily agentic workflow that detects when AWS resources have been changed outside of Terraform, queries CloudTrail to find who made the change, and uses an AI agent to classify risk, create a GitHub issue, and send a Telegram notification.
+This repository deploys a single demo EC2 instance with Terraform and runs a manually triggered agentic workflow that detects when AWS resources have been changed outside of Terraform, queries CloudTrail to find who made the change, and uses an AI agent to classify risk, create a GitHub issue, and send a Telegram notification.
 
 ---
 
@@ -68,7 +68,7 @@ The end-to-end pipeline is orchestrated by two workflows:
 
 ```mermaid
 flowchart TD
-    A([Schedule: Daily 6 AM UTC\nor workflow_dispatch]) --> B
+    A([Manual: workflow_dispatch\nor repository_dispatch]) --> B
 
     subgraph JOB1["Job 1 · Terraform Drift Scan"]
         B[Configure Teeraform cloud Auth Token] --> C[terraform init]
