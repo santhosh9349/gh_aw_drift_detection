@@ -32,9 +32,8 @@ In short, when you submit code changes, your submissions are understood to be un
 We use GitHub issues to track public bugs. Report a bug by opening a new issue; it's that easy!
 
 ## Code structure
-- `terraform/`: Terraform configurations used primarily for testing the drift detection workflows.
+- `terraform/`: A minimal Terraform configuration (one EC2 instance) used for testing the drift detection workflows.
 - `scripts/`: Python and Bash scripts for drift detection operations.
-- `terraform/modules/`: Reusable Terraform modules.
 - `docs/`: Extensive project documentation.
 
 ## License
