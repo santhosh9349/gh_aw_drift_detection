@@ -8,7 +8,7 @@
 
 **Detect, attribute, and report AWS infrastructure drift automatically — powered by GitHub Agentic Workflows and AI analysis.**
 
-This repository manages multi-VPC AWS infrastructure with Terraform and runs a daily agentic workflow that detects when AWS resources have been changed outside of Terraform, queries CloudTrail to find who made the change, and uses an AI agent to classify risk, create a GitHub issue, and send a Telegram notification.
+This repository deploys a single demo EC2 instance with Terraform and runs a daily agentic workflow that detects when AWS resources have been changed outside of Terraform, queries CloudTrail to find who made the change, and uses an AI agent to classify risk, create a GitHub issue, and send a Telegram notification.
 
 ---
 
@@ -198,7 +198,9 @@ Navigate to **Settings → Secrets and variables → Actions** in your repositor
 
 ### 3. Deploy the Terraform Infrastructure (optional)
 
-The `terraform/dev/` directory contains a working multi-VPC environment used to demonstrate and test drift detection.
+The `terraform/dev/` directory deploys one EC2 instance (in the account's default VPC) used to demonstrate and test drift detection. To see drift, change the instance out-of-band (for example edit a tag or the instance type in the AWS console) and run the drift detection workflow.
+
+> If you use Terraform Cloud with a VCS- or CLI-driven workspace, set the workspace's **Terraform Working Directory** to `terraform/dev`.
 
 ```bash
 cd terraform/dev
@@ -253,15 +255,11 @@ This regenerates `ai-analysis-notification.lock.yml`. Commit both files.
 │   ├── pull_request_template.md             # PR template
 │   └── copilot-instructions.md             # Repository-wide Copilot instructions
 ├── terraform/
-│   ├── dev/                                # Dev environment — VPCs, subnets, EC2
-│   │   ├── terraform.tf                    # Terraform Cloud backend + provider config
-│   │   ├── variables.tf                    # Add new VPCs/subnets here to scale
-│   │   ├── vpc.tf                          # Dynamic VPC creation
-│   │   ├── subnets.tf                      # Dynamic subnet creation
-│   │   ├── ec2.tf                          # EC2 instance configuration
-│   │   ├── outputs.tf                      # Environment outputs
-│   │   └── user_data/                      # EC2 user data scripts
-│   └── modules/                            # Reusable modules: vpc, subnet, ec2
+│   └── dev/                                # Demo environment — a single EC2 instance
+│       ├── terraform.tf                    # Terraform Cloud backend + provider config
+│       ├── variables.tf                    # Region, environment, instance type
+│       ├── ec2.tf                          # EC2 instance (default VPC, latest Amazon Linux 2023)
+│       └── outputs.tf                      # Instance ID and private IP
 ├── scripts/
 │   └── drift-detection/
 │       ├── query-cloudtrail.sh             # CloudTrail attribution (3-strategy lookup)

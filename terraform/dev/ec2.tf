@@ -1,35 +1,47 @@
-# Internal Web Server for Client Dashboard
-# User Story 1: Deploy Secure Internal Server in Dev VPC
+# Single EC2 instance used to demo drift detection.
+# Change it out-of-band (e.g. edit a tag or the instance type in the AWS console),
+# then run the Terraform Drift Detection workflow to see the drift reported.
 
-module "internal_web_server" {
-  source = "../modules/ec2"
+# Uses the account's default VPC so no networking resources need to be managed
+data "aws_vpc" "default" {
+  default = true
+}
 
-  name          = "dev-internal-web-server"
-  instance_type = "t3.small"
-  subnet_id     = module.subnets["dev_priv_sub1"].subnet_id
-  vpc_id        = module.vpc["dev"].vpc_id
+data "aws_subnets" "default" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
+  }
+}
 
-  # HTTPS ingress from all internal VPC CIDRs
-  ingress_cidrs = [
-    "192.0.0.0/16", # Inspection VPC
-    "172.0.0.0/16", # Dev VPC (intra-VPC)
-    "10.0.0.0/16",  # Prod VPC
-  ]
+data "aws_ami" "amazon_linux_2023" {
+  most_recent = true
+  owners      = ["amazon"]
 
-  # User data script for nginx setup
-  user_data = file("${path.module}/user_data/nginx.sh")
+  filter {
+    name   = "name"
+    values = ["al2023-ami-*-x86_64"]
+  }
 
-  # Root volume configuration
-  root_volume_size = 40
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
 
-  # Mandatory tags per Constitution
+resource "aws_instance" "demo" {
+  ami           = data.aws_ami.amazon_linux_2023.id
+  instance_type = var.instance_type
+  subnet_id     = data.aws_subnets.default.ids[0]
+
   tags = {
-    Name        = "dev-internal-web-server"
+    Name        = "drift-demo-instance"
     Environment = var.environment
-    Project     = "AWS Infrastructure"
     ManagedBy   = "Terraform"
-    Owner       = "DevOps Team"
-    CostCenter  = var.environment
-    VPC         = "dev"
+  }
+
+  lifecycle {
+    # Newer AMI releases must not show up as drift
+    ignore_changes = [ami]
   }
 }
