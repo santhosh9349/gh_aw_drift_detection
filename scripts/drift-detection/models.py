@@ -81,7 +81,6 @@ class ResourceChange(BaseModel):
 class DriftDetectionEvent(BaseModel):
     """Complete drift detection event"""
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    environment: str = Field(..., description="Target environment (dev/prod)")
     branch: str = Field(..., description="Git branch where detection ran")
     workflow_run_id: str = Field(..., description="GitHub Actions run ID")
     workflow_run_url: str = Field(..., description="URL to view workflow run")

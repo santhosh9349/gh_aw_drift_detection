@@ -215,7 +215,7 @@ terraform apply         # provision resources
 
 ```bash
 # Manual trigger via GitHub CLI
-gh workflow run drift-detection.yml --ref main -f environment=dev
+gh workflow run drift-detection.yml --ref main
 
 # Or via the GitHub UI: Actions → Terraform Drift Detection → Run workflow
 ```

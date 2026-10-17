@@ -18,7 +18,6 @@ echo "Input: $ATTRIBUTED_FILE"
 echo "Output: $OUTPUT_JSON"
 
 # Get environment variables with defaults
-ENVIRONMENT="${ENVIRONMENT:-dev}"
 BRANCH="${GITHUB_REF_NAME:-unknown}"
 RUN_ID="${GITHUB_RUN_ID:-unknown}"
 RUN_URL="${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-unknown}/actions/runs/${GITHUB_RUN_ID:-unknown}"
@@ -83,7 +82,6 @@ fi
 # Write final JSON report
 jq -n \
     --arg ts "$TIMESTAMP" \
-    --arg env "$ENVIRONMENT" \
     --arg branch "$BRANCH" \
     --arg run_id "$RUN_ID" \
     --arg run_url "$RUN_URL" \
@@ -91,7 +89,6 @@ jq -n \
     --argjson changes "$CHANGES" \
     '{
         timestamp: $ts,
-        environment: $env,
         branch: $branch,
         workflow_run_id: $run_id,
         workflow_run_url: $run_url,
@@ -100,7 +97,6 @@ jq -n \
     }' > "$OUTPUT_JSON"
 
 echo "✅ Drift report JSON generated: $OUTPUT_JSON"
-echo "   Environment: $ENVIRONMENT"
 echo "   Drift detected: $DRIFT_DETECTED"
 echo "   Resources: $CHANGE_COUNT"
 
