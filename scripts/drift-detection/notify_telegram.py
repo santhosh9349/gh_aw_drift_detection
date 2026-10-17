@@ -395,6 +395,12 @@ def cli():
         required=True,
         help="Path to drift report JSON file"
     )
+    # Accepted and ignored: older compiled workflows still pass --environment.
+    # Remove once ai-analysis-notification.lock.yml is regenerated with gh aw compile.
+    parser.add_argument(
+        "--environment",
+        help=argparse.SUPPRESS
+    )
     parser.add_argument(
         "--run-id",
         help="Unique identifier for this drift run"
