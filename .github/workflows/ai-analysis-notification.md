@@ -9,14 +9,6 @@ on:
   repository_dispatch:
     types: [drift-analysis-notify]
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment where drift was detected'
-        required: false
-        default: 'dev'
-        type: choice
-        options:
-          - dev
 
 permissions:
   contents: read
@@ -46,10 +38,6 @@ safe-outputs:
       runs-on: ubuntu-latest
       output: "Telegram notification sent successfully"
       inputs:
-        environment:
-          description: "Environment where drift was detected"
-          required: true
-          type: string
         total_resources:
           description: "Total number of drifted resources"
           required: true
@@ -88,17 +76,13 @@ safe-outputs:
             ATTR_FILE=$(find /tmp/drift-artifacts -name "drift_resources_attributed.txt" -type f 2>/dev/null | head -1)
 
             if [ -n "$ATTR_FILE" ]; then
-              # Extract environment from agent output
-              ENVIRONMENT=$(cat "$GH_AW_AGENT_OUTPUT" | jq -r '.items[] | select(.type == "send_telegram_notification") | .environment // "dev"')
-
               # Generate drift report JSON
-              ENVIRONMENT="$ENVIRONMENT" bash scripts/drift-detection/generate-drift-report.sh "$ATTR_FILE" /tmp/drift_report.json
+              bash scripts/drift-detection/generate-drift-report.sh "$ATTR_FILE" /tmp/drift_report.json
 
               # Send Telegram notification
               cd scripts/drift-detection
               python notify_telegram.py \
                 --report /tmp/drift_report.json \
-                --environment "$ENVIRONMENT" \
                 --run-id "${{ github.run_id }}"
             else
               echo "No drift attribution data found, skipping Telegram notification"
@@ -134,7 +118,6 @@ steps:
 
   - name: Prepare analysis context
     env:
-      INPUT_ENVIRONMENT: ${{ github.event.inputs.environment || 'dev' }}
       WORKFLOW_RUN_ID: ${{ github.run_id }}
       REPO: ${{ github.repository }}
       SERVER_URL: ${{ github.server_url }}
@@ -143,7 +126,6 @@ steps:
 
       echo "# Drift Detection Context" > "$CTX"
       echo "" >> "$CTX"
-      echo "- **Environment:** ${INPUT_ENVIRONMENT}" >> "$CTX"
       echo "- **Workflow Run:** [${WORKFLOW_RUN_ID}](${SERVER_URL}/${REPO}/actions/runs/${WORKFLOW_RUN_ID})" >> "$CTX"
       echo "- **Timestamp:** $(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$CTX"
       echo "- **Repository:** ${REPO}" >> "$CTX"
@@ -247,7 +229,6 @@ Create a single issue using the `create-issue` safe output. Use this structure:
 
 | Metric | Value |
 |--------|-------|
-| **Environment** | {environment} |
 | **Detected At** | {timestamp} |
 | **Total Drifted** | {total_count} |
 | **Critical** | {critical_count} |
@@ -310,7 +291,6 @@ Create a single issue using the `create-issue` safe output. Use this structure:
 ## Step 4: Send Telegram Notification
 
 After creating the issue, call the `send_telegram_notification` tool with:
-- `environment`: the environment from the drift context (e.g., "dev")
 - `total_resources`: the total count of drifted resources as a string (e.g., "5")
 
 ## Step 5: No-Drift Fallback

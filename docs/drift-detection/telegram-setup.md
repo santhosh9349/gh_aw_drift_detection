@@ -77,7 +77,7 @@ Go to **Settings** → **Secrets and variables** → **Actions** → **New repos
 ## Step 5: Test
 
 1. Go to **Actions** → **Infrastructure Drift Detection** → **Run workflow**
-2. Select an environment (dev/prod) and click **Run workflow**
+2. Select the branch (for example `main`) and click **Run workflow**
 3. A notification should appear in your Telegram channel within seconds
 
 ---
@@ -101,7 +101,6 @@ pip install -r requirements.txt
 cat > /tmp/test_report.json << EOF
 {
   "timestamp": "2026-01-29T14:30:00Z",
-  "environment": "dev",
   "branch": "main",
   "workflow_run_id": "12345",
   "workflow_run_url": "https://github.com/org/aws_infra/actions/runs/12345",
@@ -119,7 +118,7 @@ cat > /tmp/test_report.json << EOF
 EOF
 
 # Send test notification
-python notify_telegram.py --report /tmp/test_report.json --environment dev
+python notify_telegram.py --report /tmp/test_report.json
 
 # Clean up
 rm /tmp/test_report.json .env

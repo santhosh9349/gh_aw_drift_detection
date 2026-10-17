@@ -5,7 +5,7 @@ This module provides the main notification functionality for sending
 drift detection alerts to Telegram channels.
 
 Usage:
-    python notify_telegram.py --report drift_report.json --environment dev
+    python notify_telegram.py --report drift_report.json
 """
 
 import asyncio
@@ -153,7 +153,6 @@ class TelegramNotifier:
             extra={
                 "drift_run_id": drift_run_id,
                 "notification_id": notification_id,
-                "environment": event.environment,
                 "drift_detected": event.drift_detected,
                 "total_changes": event.total_changes,
             }
@@ -317,7 +316,6 @@ def parse_drift_report(report_path: str) -> DriftDetectionEvent:
     
     return DriftDetectionEvent(
         timestamp=datetime.fromisoformat(data.get("timestamp", datetime.utcnow().isoformat())),
-        environment=data.get("environment", "unknown"),
         branch=data.get("branch", "unknown"),
         workflow_run_id=data.get("workflow_run_id", "unknown"),
         workflow_run_url=data.get("workflow_run_url", ""),
@@ -347,14 +345,9 @@ async def main(args: argparse.Namespace) -> int:
         # Parse drift report
         event = parse_drift_report(args.report)
         
-        # Override environment if provided
-        if args.environment:
-            event.environment = args.environment
-        
         logger.info(
             f"Drift report parsed: {event.total_changes} changes detected",
             extra={
-                "environment": event.environment,
                 "drift_detected": event.drift_detected,
                 "total_changes": event.total_changes,
             }
@@ -401,10 +394,6 @@ def cli():
         "--report",
         required=True,
         help="Path to drift report JSON file"
-    )
-    parser.add_argument(
-        "--environment",
-        help="Override environment name (e.g., dev, prod)"
     )
     parser.add_argument(
         "--run-id",

@@ -8,14 +8,6 @@ on:
     types: [drift-check]
 
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to check for drift'
-        required: true
-        default: 'dev'
-        type: choice
-        options:
-          - dev
 
 env:
   TF_VERSION: ${{ vars.TF_VERSION }}
@@ -48,8 +40,42 @@ jobs:
       total_count: ${{ steps.parse.outputs.total_count }}
 
     steps:
+      - name: Require main branch
+        run: |
+          if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
+            echo "::error::Drift detection only runs on main (got ${GITHUB_REF}). Choose 'main' under 'Use workflow from'."
+            exit 1
+          fi
+
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Debug OIDC token and role configuration
+        env:
+          ROLE_ARN: ${{ vars.AWS_OIDC_ROLE_ARN }}
+          AWS_REGION_DEBUG: ${{ env.AWS_REGION }}
+        run: |
+          echo "Role ARN variable : ${ROLE_ARN:-<NOT SET>}"
+          echo "AWS region        : ${AWS_REGION_DEBUG:-<NOT SET>}"
+          echo "Repository        : ${GITHUB_REPOSITORY}"
+          echo "Ref               : ${GITHUB_REF}"
+          echo "Event             : ${GITHUB_EVENT_NAME}"
+          echo "Expected IAM trust sub : repo:${GITHUB_REPOSITORY}:ref:${GITHUB_REF}"
+          if [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
+            echo "::error::No OIDC token endpoint. The job needs 'permissions: id-token: write'."
+            exit 1
+          fi
+          TOKEN=$(curl -sS -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}"             "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com" | jq -r '.value')
+          echo "::add-mask::${TOKEN}"
+          echo "OIDC token claims (payload only):"
+          python3 - "$TOKEN" <<'PY'
+          import base64, json, sys
+          payload = sys.argv[1].split(".")[1]
+          payload += "=" * (-len(payload) % 4)
+          claims = json.loads(base64.urlsafe_b64decode(payload))
+          keys = ("iss", "aud", "sub", "repository", "repository_owner", "ref", "environment", "event_name", "job_workflow_ref")
+          print(json.dumps({k: claims.get(k) for k in keys}, indent=2))
+          PY
 
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
@@ -57,6 +83,9 @@ jobs:
           role-to-assume: ${{ vars.AWS_OIDC_ROLE_ARN }}
           role-session-name: DriftDetectionSession
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Debug assumed AWS identity
+        run: aws sts get-caller-identity
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -66,12 +95,12 @@ jobs:
           terraform_wrapper: false
 
       - name: Terraform Init
-        working-directory: terraform/${{ github.event.inputs.environment || 'dev' }}
+        working-directory: terraform/dev
         run: terraform init -input=false
 
       - name: Terraform Plan (Drift Detection)
         id: plan
-        working-directory: terraform/${{ github.event.inputs.environment || 'dev' }}
+        working-directory: terraform/dev
         run: |
           set +e
           MAX_RETRIES=2
@@ -124,7 +153,7 @@ jobs:
       - name: Parse Plan JSON Stream
         id: parse
         if: steps.plan.outputs.exit_code == '2'
-        working-directory: terraform/${{ github.event.inputs.environment || 'dev' }}
+        working-directory: terraform/dev
         run: |
           # Parse the plan text output to count changes (text plan is reliable source)
           echo "Parsing drift from plan output..."
@@ -228,7 +257,7 @@ jobs:
         run: |
           echo "## ✅ No Drift Detected" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Infrastructure in **${{ github.event.inputs.environment || 'dev' }}** matches the Terraform state." >> $GITHUB_STEP_SUMMARY
+          echo "Infrastructure matches the Terraform state." >> $GITHUB_STEP_SUMMARY
   # ═══════════════════════════════════════════════════════════════
   # JOB 2: CloudTrail Lookup
   # - Download drift scan artifacts (resource IDs/ARNs)
@@ -252,12 +281,42 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Debug OIDC token and role configuration
+        env:
+          ROLE_ARN: ${{ vars.AWS_OIDC_ROLE_ARN }}
+          AWS_REGION_DEBUG: ${{ env.AWS_REGION }}
+        run: |
+          echo "Role ARN variable : ${ROLE_ARN:-<NOT SET>}"
+          echo "AWS region        : ${AWS_REGION_DEBUG:-<NOT SET>}"
+          echo "Repository        : ${GITHUB_REPOSITORY}"
+          echo "Ref               : ${GITHUB_REF}"
+          echo "Event             : ${GITHUB_EVENT_NAME}"
+          echo "Expected IAM trust sub : repo:${GITHUB_REPOSITORY}:ref:${GITHUB_REF}"
+          if [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
+            echo "::error::No OIDC token endpoint. The job needs 'permissions: id-token: write'."
+            exit 1
+          fi
+          TOKEN=$(curl -sS -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}"             "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com" | jq -r '.value')
+          echo "::add-mask::${TOKEN}"
+          echo "OIDC token claims (payload only):"
+          python3 - "$TOKEN" <<'PY'
+          import base64, json, sys
+          payload = sys.argv[1].split(".")[1]
+          payload += "=" * (-len(payload) % 4)
+          claims = json.loads(base64.urlsafe_b64decode(payload))
+          keys = ("iss", "aud", "sub", "repository", "repository_owner", "ref", "environment", "event_name", "job_workflow_ref")
+          print(json.dumps({k: claims.get(k) for k in keys}, indent=2))
+          PY
+
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.AWS_OIDC_ROLE_ARN }}
           role-session-name: CloudTrailLookupSession
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Debug assumed AWS identity
+        run: aws sts get-caller-identity
 
       - name: Download Drift Scan Artifacts
         uses: actions/download-artifact@v4
@@ -321,10 +380,8 @@ jobs:
       - name: Trigger AI Analysis & Notification workflow
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ENVIRONMENT: ${{ github.event.inputs.environment || 'dev' }}
         run: |
           gh workflow run ai-analysis-notification.lock.yml \
             --repo ${{ github.repository }} \
-            --ref ${{ github.ref_name }} \
-            -f environment="$ENVIRONMENT"
+            --ref ${{ github.ref_name }}
           echo "✅ Triggered ai-analysis-notification workflow"

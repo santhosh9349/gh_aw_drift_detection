@@ -87,7 +87,6 @@ def format_drift_message(event: DriftDetectionEvent) -> str:
     
     # Metadata section
     timestamp_str = event.timestamp.strftime("%Y\\-m\\-%d %H:%M:%S UTC")
-    lines.append(f"*Environment:* {escape_markdown(event.environment)}")
     lines.append(f"*Branch:* {escape_markdown(event.branch)}")
     lines.append(f"*Time:* {timestamp_str}")
     lines.append(f"*Resources Affected:* {event.total_changes}")
@@ -246,7 +245,6 @@ def format_no_drift_message(event: DriftDetectionEvent) -> str:
     lines = [
         "✅ *No Infrastructure Drift Detected*",
         "",
-        f"*Environment:* {escape_markdown(event.environment)}",
         f"*Branch:* {escape_markdown(event.branch)}",
         f"*Time:* {timestamp_str}",
         "",
