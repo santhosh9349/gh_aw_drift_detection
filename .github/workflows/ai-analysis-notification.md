@@ -26,6 +26,8 @@ safe-outputs:
   mentions: false
   allowed-github-references: []
   max-bot-mentions: 1
+  # Threat detection disabled: this AWS account is temporary and used only for demos
+  threat-detection: false
   create-issue:
     title-prefix: "🔴 [Drift] "
     labels: [drift, infrastructure, ai-analysis, automated]
